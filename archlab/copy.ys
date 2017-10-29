@@ -1,0 +1,53 @@
+# user ID = 1600012806  	name = 吴润迪
+# 这题也比较简单，只需要照着copy_block的C代码写就可以了，注意循环过程中地址的增加
+# 详细注释见代码右边
+
+#initialize
+	.pos 0
+	irmovl stack, %esp	#set up stack pointer
+	call main
+	halt			# terminate program
+
+
+.align 4
+# Source block
+src:
+	.long 0x00a
+	.long 0x0b0
+	.long 0xc00
+# Destination block
+dest:
+	.long 0x111
+	.long 0x222
+	.long 0x333
+
+
+main:
+	irmovl src, %edi
+	irmovl dest, %esi
+	irmovl $3, %edx		# pass parameters
+	call   copy_block
+	ret
+
+
+# int copy_block(int *src, int *dest, int len)
+copy_block:
+	xorl %eax, %eax		# set result = 0
+	irmovl $4, %ecx		# use for src++
+	irmovl $1, %ebp		# use for len--
+	jmp	test
+loop:
+	mrmovl (%edi), %ebx	# val = *src
+	addl %ecx, %edi		# src += 4
+	rmmovl %ebx, (%esi) 	# *dest = val
+	addl %ecx, %esi		# dest += 4
+	xorl %ebx, %eax		# result^=val
+	subl %ebp, %edx		# len--
+test:
+	andl %edx, %edx		# len == 0?
+	jne loop
+	ret
+
+# stack here
+	.pos 0x200
+stack:

@@ -1,0 +1,53 @@
+                      | # user ID = T031600012806  	name = 吴润迪
+                      | # 这题也比较简单，只需要照着copy_block的C代码写就可以了，注意循环过程中地址的增加
+                      | # 详细注释见代码右边
+                      | 
+                      | #initialize
+  0x000:              | 	.pos 0
+  0x000: 30f400020000 | 	irmovl stack, %esp	#set up stack pointer
+  0x006: 8024000000   | 	call main
+  0x00b: 00           | 	halt			# terminate program
+                      | 
+                      | 
+  0x00c:              | .align 4
+                      | # Source block
+  0x00c:              | src:
+  0x00c: 0a000000     | 	.long 0x00a
+  0x010: b0000000     | 	.long 0x0b0
+  0x014: 000c0000     | 	.long 0xc00
+                      | # Destination block
+  0x018:              | dest:
+  0x018: 11010000     | 	.long 0x111
+  0x01c: 22020000     | 	.long 0x222
+  0x020: 33030000     | 	.long 0x333
+                      | 
+                      | 
+  0x024:              | main:
+  0x024: 30f70c000000 | 	irmovl src, %edi
+  0x02a: 30f618000000 | 	irmovl dest, %esi
+  0x030: 30f203000000 | 	irmovl $3, %edx		# pass parameters
+  0x036: 803c000000   | 	call   copy_block
+  0x03b: 90           | 	ret
+                      | 
+                      | 
+                      | # int copy_block(int *src, int *dest, int len)
+  0x03c:              | copy_block:
+  0x03c: 6300         | 	xorl %eax, %eax		# set result = 0
+  0x03e: 30f104000000 | 	irmovl $4, %ecx		# use for src++
+  0x044: 30f501000000 | 	irmovl $1, %ebp		# use for len--
+  0x04a: 7063000000   | 	jmp	test
+  0x04f:              | loop:
+  0x04f: 503700000000 | 	mrmovl (%edi), %ebx	# val = *src
+  0x055: 6017         | 	addl %ecx, %edi		# src += 4
+  0x057: 403600000000 | 	rmmovl %ebx, (%esi) 	# *dest = val
+  0x05d: 6016         | 	addl %ecx, %esi		# dest += 4
+  0x05f: 6330         | 	xorl %ebx, %eax		# result^=val
+  0x061: 6152         | 	subl %ebp, %edx		# len--
+  0x063:              | test:
+  0x063: 6222         | 	andl %edx, %edx		# len == 0?
+  0x065: 744f000000   | 	jne loop
+  0x06a: 90           | 	ret
+                      | 
+                      | # stack here
+  0x200:              | 	.pos 0x200
+  0x200:              | stack:

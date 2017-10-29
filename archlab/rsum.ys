@@ -1,0 +1,54 @@
+# user ID = 1600012806  	name = 吴润迪
+# 思路就是在sum_list的基础上修改，使之变成递归函数。特别要注意的是递归过程中寄存器的保存和使用，以及避免一些重复性操作。
+# 详细注释见代码
+
+
+# initialize
+	.pos 0
+	irmovl stack, %esp	# set up stack pointer
+	call main
+	halt			# terminate program
+
+
+# Sample linked list
+	.align 4
+ele1:
+	.long 0x00a
+	.long ele2
+ele2:
+	.long 0x0b0
+	.long ele3
+ele3:
+	.long 0xc00
+	.long 0
+
+
+# main function
+main:
+	irmovl ele1, %edi	# pass the parameter
+	irmovl $4, %edx		# get imediate number 4
+	call rsum_list		# call the function<rsum_list>
+	ret
+
+# int rsum_list(list_ptr ls)
+# ls in %edi
+rsum_list:
+	pushl %ebx		# save callee saved register
+	pushl %ebp
+	rrmovl %edi, %ebp	# store ls in %ebp
+	xorl %eax, %eax		# set return val = 0
+	andl %ebp, %ebp		# ls == 0?
+	je   end
+	mrmovl (%ebp), %ebx	# store ls->val in %ebx
+	addl %edx, %ebp		# ls += 4
+	mrmovl (%ebp), %edi	# ls = ls->next
+	call rsum_list
+	addl %ebx, %eax		# return_val = ls->val + rsum_list(ls->next)
+end:
+	popl %ebp
+	popl %ebx
+	ret
+	
+#stack start here
+	.pos 0x100
+stack:

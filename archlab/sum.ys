@@ -1,0 +1,53 @@
+# user ID = 1600012806  	name = 吴润迪
+# 仿照书本p252样例就大概能有思路, 注意y86里立即数不能直接参与运算
+# 详细注释见代码
+
+# initialize
+	.pos 0
+	irmovl stack, %esp	#set up stack pointer
+	call main
+	halt			# terminate program
+
+
+# Sample linked list
+	.align 4
+ele1:
+	.long 0x00a
+	.long ele2
+ele2:
+	.long 0x0b0
+	.long ele3
+ele3:
+	.long 0xc00
+	.long 0
+
+
+# main
+main:
+	irmovl ele1, %edi	# pass the parameter
+	call sum_list		# call the function<sum_list>
+	ret
+
+
+# int sum_list(list_ptr ls)
+# ls in %edi
+sum_list:
+	irmovl $4, %edx		#get imediate number 4
+	xorl %eax, %eax		#set return val = 0
+	andl %edi, %edi		#ls == 0?
+	jmp  test
+loop:
+	mrmovl (%edi), %ecx	
+	addl %ecx, %eax		# val += ls->val
+	addl %edx, %edi
+	mrmovl (%edi), %ebx
+	rrmovl %ebx, %edi	# ls = ls->next
+	andl %edi, %edi		#ls == 0?
+	jmp test
+test:
+	jne loop
+	ret
+	
+# stack starts here
+	.pos 0x100
+stack:

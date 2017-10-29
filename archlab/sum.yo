@@ -1,0 +1,53 @@
+                      | # user ID = T031600012806  	name = 吴润迪
+                      | # 仿照书本p252样例就大概能有思路, 注意y86里立即数不能直接参与运算
+                      | # 详细注释见代码
+                      | 
+                      | # initialize
+  0x000:              | 	.pos 0
+  0x000: 30f400010000 | 	irmovl stack, %esp	#set up stack pointer
+  0x006: 8024000000   | 	call main
+  0x00b: 00           | 	halt			# terminate program
+                      | 
+                      | 
+                      | # Sample linked list
+  0x00c:              | 	.align 4
+  0x00c:              | ele1:
+  0x00c: 0a000000     | 	.long 0x00a
+  0x010: 14000000     | 	.long ele2
+  0x014:              | ele2:
+  0x014: b0000000     | 	.long 0x0b0
+  0x018: 1c000000     | 	.long ele3
+  0x01c:              | ele3:
+  0x01c: 000c0000     | 	.long 0xc00
+  0x020: 00000000     | 	.long 0
+                      | 
+                      | 
+                      | # main
+  0x024:              | main:
+  0x024: 30f70c000000 | 	irmovl ele1, %edi	# pass the parameter
+  0x02a: 8030000000   | 	call sum_list		# call the function<sum_list>
+  0x02f: 90           | 	ret
+                      | 
+                      | 
+                      | # int sum_list(list_ptr ls)
+                      | # ls in %edi
+  0x030:              | sum_list:
+  0x030: 30f204000000 | 	irmovl $4, %edx		#get imediate number 4
+  0x036: 6300         | 	xorl %eax, %eax		#set return val = 0
+  0x038: 6277         | 	andl %edi, %edi		#ls == 0?
+  0x03a: 7058000000   | 	jmp  test
+  0x03f:              | loop:
+  0x03f: 501700000000 | 	mrmovl (%edi), %ecx	
+  0x045: 6010         | 	addl %ecx, %eax		# val += ls->val
+  0x047: 6027         | 	addl %edx, %edi
+  0x049: 503700000000 | 	mrmovl (%edi), %ebx
+  0x04f: 2037         | 	rrmovl %ebx, %edi	# ls = ls->next
+  0x051: 6277         | 	andl %edi, %edi		#ls == 0?
+  0x053: 7058000000   | 	jmp test
+  0x058:              | test:
+  0x058: 743f000000   | 	jne loop
+  0x05d: 90           | 	ret
+                      | 	
+                      | # stack starts here
+  0x100:              | 	.pos 0x100
+  0x100:              | stack:

@@ -1,0 +1,54 @@
+                      | # user ID = T031600012806  	name = 吴润迪
+                      | # 思路就是在sum_list的基础上修改，使之变成递归函数。特别要注意的是递归过程中寄存器的保存和使用，以及避免一些重复性操作。
+                      | # 详细注释见代码
+                      | 
+                      | 
+                      | # initialize
+  0x000:              | 	.pos 0
+  0x000: 30f400010000 | 	irmovl stack, %esp	# set up stack pointer
+  0x006: 8024000000   | 	call main
+  0x00b: 00           | 	halt			# terminate program
+                      | 
+                      | 
+                      | # Sample linked list
+  0x00c:              | 	.align 4
+  0x00c:              | ele1:
+  0x00c: 0a000000     | 	.long 0x00a
+  0x010: 14000000     | 	.long ele2
+  0x014:              | ele2:
+  0x014: b0000000     | 	.long 0x0b0
+  0x018: 1c000000     | 	.long ele3
+  0x01c:              | ele3:
+  0x01c: 000c0000     | 	.long 0xc00
+  0x020: 00000000     | 	.long 0
+                      | 
+                      | 
+                      | # main function
+  0x024:              | main:
+  0x024: 30f70c000000 | 	irmovl ele1, %edi	# pass the parameter
+  0x02a: 30f204000000 | 	irmovl $4, %edx		# get imediate number 4
+  0x030: 8036000000   | 	call rsum_list		# call the function<rsum_list>
+  0x035: 90           | 	ret
+                      | 
+                      | # int rsum_list(list_ptr ls)
+                      | # ls in %edi
+  0x036:              | rsum_list:
+  0x036: a03f         | 	pushl %ebx		# save callee saved register
+  0x038: a05f         | 	pushl %ebp
+  0x03a: 2075         | 	rrmovl %edi, %ebp	# store ls in %ebp
+  0x03c: 6300         | 	xorl %eax, %eax		# set return val = 0
+  0x03e: 6255         | 	andl %ebp, %ebp		# ls == 0?
+  0x040: 735a000000   | 	je   end
+  0x045: 503500000000 | 	mrmovl (%ebp), %ebx	# store ls->val in %ebx
+  0x04b: 6025         | 	addl %edx, %ebp		# ls += 4
+  0x04d: 507500000000 | 	mrmovl (%ebp), %edi	# ls = ls->next
+  0x053: 8036000000   | 	call rsum_list
+  0x058: 6030         | 	addl %ebx, %eax		# return_val = ls->val + rsum_list(ls->next)
+  0x05a:              | end:
+  0x05a: b05f         | 	popl %ebp
+  0x05c: b03f         | 	popl %ebx
+  0x05e: 90           | 	ret
+                      | 	
+                      | #stack start here
+  0x100:              | 	.pos 0x100
+  0x100:              | stack:
