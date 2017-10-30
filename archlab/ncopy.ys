@@ -1,0 +1,103 @@
+# userID = 1600012806	   name = 吴润迪
+# 浏览一遍汇编代码，发现有用到前面实现的iaddl（立即数的加法）和leave
+# 所以第一个考虑的就是在hcl中实现这两条指令，然后替换掉汇编中相应的部分
+# 但是仅这样做是显然不够的，于是考虑到用循环展开
+# 这里我用了4×1循环展开，需要注意条件码的设置和避免一些load/use hazard
+# 还需要特别注意Loop跳转时候的条件，我第一边有一个jge写成jg了，结果4的倍数的情况都出错
+#/* $begin ncopy-ys */
+##################################################################
+# ncopy.ys - Copy a src block of len ints to dst.
+# Return the number of positive ints (>0) contained in src.
+#
+# Include your name and ID here.
+#
+# Describe how and why you modified the baseline code.
+#
+##################################################################
+# Do not modify this portion
+# Function prologue.
+ncopy:	pushl %ebp		# Save old frame pointer
+	rrmovl %esp,%ebp	# Set up new frame pointer
+	pushl %esi		# Save callee-save regs
+	pushl %ebx
+	pushl %edi
+	mrmovl 8(%ebp),%ebx	# src
+	mrmovl 16(%ebp),%edx	# len
+	mrmovl 12(%ebp),%ecx	# dst
+
+##################################################################
+# You can modify this portion
+	# Loop header
+	xorl %eax,%eax		# count = 0;
+	iaddl $-4, %edx		# len -= 4,  to set the first loop's upperbound
+	andl %edx,%edx		# len < 0?
+	jl Rest			# if so, goto Rest: 
+				# that is to say if len <= 3, then go directly to second loop
+
+Loop:	mrmovl (%ebx), %esi	# read val from src...
+	mrmovl 4(%ebx), %edi					# prepare for Npos1 and avoid l/u hazard
+	rmmovl %esi, (%ecx)	# ...and store it to dst	#there used to be a load/use hazard
+	andl %esi, %esi		# val <= 0?
+	jle Npos1		# if so, goto Npos1:
+	iaddl $1, %eax		# count++
+
+Npos1:  rmmovl %edi, 4(%ecx)	# store to dst+4
+	andl %edi, %edi
+	jle Npos2
+	iaddl $1, %eax
+
+Npos2:  mrmovl 8(%ebx), %esi	# similar to Loop
+	mrmovl 12(%ebx), %edi	
+	rmmovl %esi, 8(%ecx)
+	andl %esi, %esi
+	jle Npos3
+	iaddl $1, %eax
+
+Npos3:	rmmovl %edi, 12(%ecx)
+	andl %edi, %edi
+	jle Tail
+	iaddl $1, %eax
+
+Tail:	iaddl $16, %ebx		# src++
+	iaddl $16, %ecx		# dst++
+	iaddl $-4, %edx 	# len-- and set CC (that's why put it behind)
+	jge Loop		# if now still len >= 0, goto Loop:(note that this must be jge, consider len = 8)
+
+# now there must be less than 3 elements
+Rest:	iaddl $4, %edx		# restore len since we sub len by 4 at the beginning
+	iaddl $-1, %edx
+	jl Done			# if len < 0 then go to Done
+	mrmovl (%ebx), %esi	
+	mrmovl 4(%ebx), %edi	
+	rmmovl %esi, (%ecx)	
+	andl %esi, %esi		
+	jle RNpos1		
+	iaddl $1, %eax
+
+RNpos1: iaddl $-1, %edx
+	jl Done
+	rmmovl %edi, 4(%ecx)
+	andl %edi, %edi
+	jle RNpos2
+	iaddl $1, %eax
+
+RNpos2: iaddl $-1, %edx
+	jl Done
+	mrmovl 8(%ebx), %esi
+	andl %esi, %esi			#avoid  l/u hazard
+	rmmovl %esi, 8(%ecx)
+	jle Done
+	iaddl $1, %eax
+##################################################################
+# Do not modify the following section of code
+# Function epilogue.
+Done:
+	popl %edi               # Restore callee-save registers
+	popl %ebx
+	popl %esi
+	leave
+	ret
+##################################################################
+# Keep the following label at the end of your function
+End:
+#/* $end ncopy-ys */
